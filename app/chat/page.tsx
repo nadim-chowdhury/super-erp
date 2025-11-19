@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import {
   setUsers,
@@ -53,6 +53,11 @@ export default function ChatPage() {
       const chatMessages = generateMessages(chat.id, chat.participants, 30);
       dispatch(setMessages({ chatId: chat.id, messages: chatMessages }));
     });
+
+    // Auto-select first chat
+    if (demoChats.length > 0) {
+      dispatch(setSelectedChat(demoChats[0].id));
+    }
   }, [dispatch]);
 
   // Simulate real-time messages
@@ -207,7 +212,20 @@ export default function ChatPage() {
     }
   };
 
-  const selectedChat = chats.find((c) => c.id === selectedChatId);
+  // Sort chats by last message time (most recent first)
+  const sortedChats = useMemo(() => {
+    return [...chats].sort((a, b) => {
+      if (!a.lastMessage && !b.lastMessage) return 0;
+      if (!a.lastMessage) return 1;
+      if (!b.lastMessage) return -1;
+      return (
+        new Date(b.lastMessage.createdAt).getTime() -
+        new Date(a.lastMessage.createdAt).getTime()
+      );
+    });
+  }, [chats]);
+
+  const selectedChat = sortedChats.find((c) => c.id === selectedChatId);
   const selectedChatMessages = selectedChatId
     ? messages[selectedChatId] || []
     : [];
@@ -227,12 +245,12 @@ export default function ChatPage() {
           </div>
         </div>
 
-        <div className="h-[calc(100vh-208px)]">
+        <div className="h-[calc(100vh-198px)]">
           <Card className="h-full py-0">
             <div className="flex h-full">
               <div className="w-80 shrink-0">
                 <ChatList
-                  chats={chats}
+                  chats={sortedChats}
                   users={users}
                   selectedChatId={selectedChatId}
                   searchQuery={searchQuery}

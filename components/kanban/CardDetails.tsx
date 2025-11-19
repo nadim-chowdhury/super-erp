@@ -205,6 +205,49 @@ export function CardDetails({
                   }
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="assignees">Assignees</Label>
+                <div className="flex flex-wrap gap-2">
+                  {assigneeOptions.map((assignee) => {
+                    const isSelected = formData.assignees.includes(assignee);
+                    return (
+                      <Button
+                        key={assignee}
+                        type="button"
+                        variant={isSelected ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            assignees: isSelected
+                              ? formData.assignees.filter((a) => a !== assignee)
+                              : [...formData.assignees, assignee],
+                          });
+                        }}
+                      >
+                        {assignee}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tags">Tags (comma-separated)</Label>
+                <Input
+                  id="tags"
+                  value={formData.tags.join(", ")}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      tags: e.target.value
+                        .split(",")
+                        .map((t) => t.trim())
+                        .filter((t) => t.length > 0),
+                    })
+                  }
+                  placeholder="e.g., urgent, frontend, bug"
+                />
+              </div>
             </>
           ) : (
             <>

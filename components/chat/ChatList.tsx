@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import { Chat, ChatUser } from "@/lib/data/demoData";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,9 @@ export function ChatList({
   onSearchChange,
   currentUserId,
 }: ChatListProps) {
+  const chatListRef = useRef<HTMLDivElement>(null);
+  const selectedChatRef = useRef<HTMLDivElement>(null);
+
   const filteredChats = useMemo(() => {
     if (!searchQuery.trim()) return chats;
 
@@ -44,6 +47,16 @@ export function ChatList({
       );
     });
   }, [chats, searchQuery, users, currentUserId]);
+
+  // Scroll to selected chat
+  useEffect(() => {
+    if (selectedChatRef.current && selectedChatId) {
+      selectedChatRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [selectedChatId]);
 
   const getChatUser = (chat: Chat): ChatUser | undefined => {
     if (chat.type === "group") return undefined;
@@ -105,8 +118,10 @@ export function ChatList({
         </div>
       </div>
 
-      {/* <ScrollArea className="h-[calc(100vh-186px)]"> */}
-      <div className="p-2 h-[calc(100vh-186px)] overflow-y-auto">
+      <div
+        ref={chatListRef}
+        className="p-2 h-[calc(100vh-186px)] overflow-y-auto"
+      >
         {filteredChats.length === 0 ? (
           <div className="text-center py-8 text-sm text-muted-foreground">
             {searchQuery ? "No chats found" : "No chats yet"}
@@ -122,6 +137,7 @@ export function ChatList({
             return (
               <div
                 key={chat.id}
+                ref={isSelected ? selectedChatRef : null}
                 onClick={() => onSelectChat(chat.id)}
                 className={cn(
                   "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50",
@@ -182,7 +198,6 @@ export function ChatList({
           })
         )}
       </div>
-      {/* </ScrollArea> */}
     </div>
   );
 }

@@ -6,11 +6,16 @@ import {
   setCards,
   setBoardType,
   moveCard,
+  addCard,
   updateCard,
   deleteCard,
   setSelectedCard,
   setFilters,
   clearFilters,
+  addColumn,
+  updateColumn,
+  deleteColumn,
+  KanbanColumn,
 } from "@/lib/store/slices/kanbanSlice";
 import { generateKanbanCards, KanbanCard } from "@/lib/data/demoData";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -23,6 +28,8 @@ import {
 } from "@/components/ui/card";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { CardDetails } from "@/components/kanban/CardDetails";
+import { AddColumnDialog } from "@/components/kanban/AddColumnDialog";
+import { EditColumnDialog } from "@/components/kanban/EditColumnDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -93,11 +100,14 @@ const assigneeOptions = [
 
 export default function KanbanPage() {
   const dispatch = useAppDispatch();
-  const { cards, boardType, filters, selectedCard } = useAppSelector(
+  const { cards, boardType, filters, selectedCard, columns } = useAppSelector(
     (state) => state.kanban
   );
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isCardDetailsOpen, setIsCardDetailsOpen] = useState(false);
+  const [isAddColumnOpen, setIsAddColumnOpen] = useState(false);
+  const [isEditColumnOpen, setIsEditColumnOpen] = useState(false);
+  const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
 
   useEffect(() => {
     const demoCards = generateKanbanCards(boardType, 30);
@@ -105,6 +115,14 @@ export default function KanbanPage() {
   }, [boardType, dispatch]);
 
   const boardConfig = boardConfigs[boardType];
+  const boardColumns =
+    columns[boardType] ||
+    boardConfig.columns.map((col, idx) => ({
+      id: col.id,
+      title: col.title,
+      color: col.color,
+      order: idx,
+    }));
 
   const filteredCards = useMemo(() => {
     return cards.filter((card) => {
@@ -181,9 +199,53 @@ export default function KanbanPage() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    dispatch(setCards([...cards, newCard]));
+    dispatch(addCard(newCard));
     dispatch(setSelectedCard(newCard));
     setIsCardDetailsOpen(true);
+  };
+
+  const handleAddColumn = (column: Omit<KanbanColumn, "order">) => {
+    const maxOrder =
+      boardColumns.length > 0
+        ? Math.max(...boardColumns.map((c) => c.order))
+        : -1;
+    dispatch(
+      addColumn({
+        boardType,
+        column: {
+          ...column,
+          order: maxOrder + 1,
+        },
+      })
+    );
+  };
+
+  const handleEditColumn = (columnId: string) => {
+    setSelectedColumnId(columnId);
+    setIsEditColumnOpen(true);
+  };
+
+  const handleUpdateColumn = (updates: Partial<KanbanColumn>) => {
+    if (selectedColumnId) {
+      dispatch(
+        updateColumn({
+          boardType,
+          columnId: selectedColumnId,
+          updates,
+        })
+      );
+    }
+  };
+
+  const handleDeleteColumn = () => {
+    if (selectedColumnId) {
+      dispatch(
+        deleteColumn({
+          boardType,
+          columnId: selectedColumnId,
+        })
+      );
+    }
   };
 
   const hasActiveFilters =
@@ -359,16 +421,30 @@ export default function KanbanPage() {
                   {filteredCards.length !== 1 ? "s" : ""} total
                 </CardDescription>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsAddColumnOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Column
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="h-[calc(100vh-380px)] overflow-auto p-4">
+            <div className="h-[calc(100vh-280px)] overflow-x-auto overflow-y-hidden p-4">
               <KanbanBoard
                 cards={filteredCards}
-                columns={boardConfig.columns}
+                columns={boardColumns.map((col) => ({
+                  id: col.id,
+                  title: col.title,
+                  color: col.color,
+                }))}
                 onCardMove={handleCardMove}
                 onCardClick={handleCardClick}
                 onAddCard={handleAddCard}
+                onEditColumn={handleEditColumn}
+                onDeleteColumn={handleDeleteColumn}
               />
             </div>
           </CardContent>
@@ -385,9 +461,37 @@ export default function KanbanPage() {
           }}
           onUpdate={handleCardUpdate}
           onDelete={handleCardDelete}
-          statusOptions={boardConfig.columns}
+          statusOptions={boardColumns.map((col) => ({
+            id: col.id,
+            title: col.title,
+          }))}
           priorityOptions={priorityOptions}
           assigneeOptions={assigneeOptions}
+        />
+
+        <AddColumnDialog
+          open={isAddColumnOpen}
+          onOpenChange={setIsAddColumnOpen}
+          onAdd={handleAddColumn}
+          existingColumns={boardColumns}
+        />
+
+        <EditColumnDialog
+          open={isEditColumnOpen}
+          onOpenChange={(open) => {
+            setIsEditColumnOpen(open);
+            if (!open) {
+              setSelectedColumnId(null);
+            }
+          }}
+          column={
+            selectedColumnId
+              ? boardColumns.find((c) => c.id === selectedColumnId) || null
+              : null
+          }
+          onUpdate={handleUpdateColumn}
+          onDelete={handleDeleteColumn}
+          existingColumns={boardColumns}
         />
       </div>
     </MainLayout>

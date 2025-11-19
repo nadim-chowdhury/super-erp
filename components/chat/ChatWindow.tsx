@@ -31,19 +31,22 @@ export function ChatWindow({
   onTyping,
   typingUsers,
 }: ChatWindowProps) {
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const [isAtBottom, setIsAtBottom] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isAtBottom && scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]"
-      );
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    // Scroll to bottom when messages change or chat changes
+    const scrollToBottom = () => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop =
+          messagesContainerRef.current.scrollHeight;
       }
-    }
-  }, [messages, isAtBottom]);
+    };
+
+    // Use setTimeout to ensure DOM is updated
+    const timer = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timer);
+  }, [messages, chat]);
 
   if (!chat) {
     return (
@@ -176,8 +179,10 @@ export function ChatWindow({
       </div>
 
       {/* Messages */}
-      {/* <ScrollArea className="flex-1" ref={scrollAreaRef}> */}
-      <div className="p-4 space-y-4 h-[calc(100vh-186px)] overflow-y-auto">
+      <div
+        ref={messagesContainerRef}
+        className="p-4 space-y-4 h-[calc(100vh-186px)] overflow-y-auto"
+      >
         {Object.entries(messageGroups).map(([date, dateMessages]) => (
           <div key={date}>
             <div className="flex items-center justify-center my-4">
@@ -205,13 +210,13 @@ export function ChatWindow({
             })}
           </div>
         ))}
-        {messages.length === 0 && (
-          <div className="text-center py-8 text-sm text-muted-foreground">
-            No messages yet. Start the conversation!
-          </div>
-        )}
-      </div>
-      {/* </ScrollArea> */}
+          {messages.length === 0 && (
+            <div className="text-center py-8 text-sm text-muted-foreground">
+              No messages yet. Start the conversation!
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
 
       {/* Input */}
       <ChatInput onSendMessage={onSendMessage} onTyping={onTyping} />

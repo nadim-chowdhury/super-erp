@@ -9,9 +9,15 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
-import { Plus } from "lucide-react";
+import { Plus, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface KanbanColumnProps {
   id: string;
@@ -19,6 +25,8 @@ interface KanbanColumnProps {
   cards: KanbanCardType[];
   onCardClick?: (card: KanbanCardType) => void;
   onAddCard?: (status: string) => void;
+  onEditColumn?: (columnId: string) => void;
+  onDeleteColumn?: (columnId: string) => void;
   color?: string;
   isDraggingOver?: boolean;
   activeCardId?: string;
@@ -30,6 +38,8 @@ export function KanbanColumn({
   cards,
   onCardClick,
   onAddCard,
+  onEditColumn,
+  onDeleteColumn,
   color,
   isDraggingOver = false,
   activeCardId,
@@ -66,16 +76,42 @@ export function KanbanColumn({
               {cards.length}
             </Badge>
           </div>
-          {onAddCard && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => onAddCard(id)}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          )}
+          <div className="flex items-center gap-1">
+            {onAddCard && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => onAddCard(id)}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            )}
+            {(onEditColumn || onDeleteColumn) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {onEditColumn && (
+                    <DropdownMenuItem onClick={() => onEditColumn(id)}>
+                      Edit Column
+                    </DropdownMenuItem>
+                  )}
+                  {onDeleteColumn && (
+                    <DropdownMenuItem
+                      onClick={() => onDeleteColumn(id)}
+                      className="text-destructive"
+                    >
+                      Delete Column
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
 
         <div

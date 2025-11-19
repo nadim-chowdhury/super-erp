@@ -23,6 +23,8 @@ interface KanbanBoardProps {
   onCardMove?: (cardId: string, newStatus: string) => void;
   onCardClick?: (card: KanbanCardType) => void;
   onAddCard?: (status: string) => void;
+  onEditColumn?: (columnId: string) => void;
+  onDeleteColumn?: (columnId: string) => void;
 }
 
 export function KanbanBoard({
@@ -31,6 +33,8 @@ export function KanbanBoard({
   onCardMove,
   onCardClick,
   onAddCard,
+  onEditColumn,
+  onDeleteColumn,
 }: KanbanBoardProps) {
   const [activeCard, setActiveCard] = useState<KanbanCardType | null>(null);
   const [overColumnId, setOverColumnId] = useState<string | null>(null);
@@ -121,7 +125,7 @@ export function KanbanBoard({
       onDragEnd={handleDragEnd}
     >
       <div className="w-full h-full overflow-x-auto overflow-y-hidden">
-        <div className="flex gap-4 w-full overflow-x-auto h-full">
+        <div className="flex gap-4 h-full min-w-max">
           {columns.map((column) => (
             <KanbanColumn
               key={column.id}
@@ -130,6 +134,8 @@ export function KanbanBoard({
               cards={cardsByStatus[column.id] || []}
               onCardClick={onCardClick}
               onAddCard={onAddCard}
+              onEditColumn={onEditColumn}
+              onDeleteColumn={onDeleteColumn}
               color={column.color}
               isDraggingOver={overColumnId === column.id && activeCard !== null}
               activeCardId={activeCard?.id}
