@@ -8,6 +8,11 @@ import productsReducer from "./slices/productsSlice";
 import employeesReducer from "./slices/employeesSlice";
 import financeReducer from "./slices/financeSlice";
 import notificationsReducer from "./slices/notificationsSlice";
+import activityReducer from "./slices/activitySlice";
+import filesReducer from "./slices/filesSlice";
+import calendarReducer from "./slices/calendarSlice";
+import kanbanReducer from "./slices/kanbanSlice";
+import chatReducer from "./slices/chatSlice";
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +25,11 @@ export const store = configureStore({
     employees: employeesReducer,
     finance: financeReducer,
     notifications: notificationsReducer,
+    activity: activityReducer,
+    files: filesReducer,
+    calendar: calendarReducer,
+    kanban: kanbanReducer,
+    chat: chatReducer,
   },
 });
 

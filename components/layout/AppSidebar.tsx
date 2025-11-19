@@ -14,6 +14,11 @@ import {
   FileText,
   Settings,
   Sparkles,
+  Activity,
+  FolderOpen,
+  Calendar as CalendarIcon,
+  LayoutGrid,
+  MessageCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -71,6 +76,31 @@ const menuItems = [
     title: "Reports",
     icon: FileText,
     href: "/reports",
+  },
+  {
+    title: "Activity",
+    icon: Activity,
+    href: "/activity",
+  },
+  {
+    title: "Files",
+    icon: FolderOpen,
+    href: "/files",
+  },
+  {
+    title: "Calendar",
+    icon: CalendarIcon,
+    href: "/calendar",
+  },
+  {
+    title: "Kanban",
+    icon: LayoutGrid,
+    href: "/kanban",
+  },
+  {
+    title: "Chat",
+    icon: MessageCircle,
+    href: "/chat",
   },
   {
     title: "Settings",
