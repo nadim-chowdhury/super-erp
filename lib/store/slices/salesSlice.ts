@@ -51,6 +51,47 @@ const salesSlice = createSlice({
     ) => {
       state.filters = { ...state.filters, ...action.payload };
     },
+    bulkDeleteOrders: (state, action: PayloadAction<string[]>) => {
+      state.orders = state.orders.filter(
+        (o) => !action.payload.includes(o.id)
+      );
+    },
+    bulkUpdateOrders: (
+      state,
+      action: PayloadAction<{ ids: string[]; updates: Partial<Order> }>
+    ) => {
+      state.orders = state.orders.map((o) =>
+        action.payload.ids.includes(o.id)
+          ? { ...o, ...action.payload.updates }
+          : o
+      );
+    },
+    bulkUpdateStatus: (
+      state,
+      action: PayloadAction<{ ids: string[]; status: Order["status"] }>
+    ) => {
+      state.orders = state.orders.map((o) =>
+        action.payload.ids.includes(o.id)
+          ? {
+              ...o,
+              status: action.payload.status,
+            }
+          : o
+      );
+    },
+    bulkUpdatePaymentStatus: (
+      state,
+      action: PayloadAction<{ ids: string[]; paymentStatus: Order["paymentStatus"] }>
+    ) => {
+      state.orders = state.orders.map((o) =>
+        action.payload.ids.includes(o.id)
+          ? {
+              ...o,
+              paymentStatus: action.payload.paymentStatus,
+            }
+          : o
+      );
+    },
   },
 });
 
@@ -61,5 +102,9 @@ export const {
   deleteOrder,
   setSelectedOrder,
   setFilters,
+  bulkDeleteOrders,
+  bulkUpdateOrders,
+  bulkUpdateStatus,
+  bulkUpdatePaymentStatus,
 } = salesSlice.actions;
 export default salesSlice.reducer;

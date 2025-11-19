@@ -49,6 +49,34 @@ const inventorySlice = createSlice({
     ) => {
       state.filters = { ...state.filters, ...action.payload };
     },
+    bulkDeleteProducts: (state, action: PayloadAction<string[]>) => {
+      state.products = state.products.filter(
+        (p) => !action.payload.includes(p.id)
+      );
+    },
+    bulkUpdateProducts: (
+      state,
+      action: PayloadAction<{ ids: string[]; updates: Partial<Product> }>
+    ) => {
+      state.products = state.products.map((p) =>
+        action.payload.ids.includes(p.id)
+          ? { ...p, ...action.payload.updates }
+          : p
+      );
+    },
+    bulkUpdateStatus: (
+      state,
+      action: PayloadAction<{ ids: string[]; status: Product["status"] }>
+    ) => {
+      state.products = state.products.map((p) =>
+        action.payload.ids.includes(p.id)
+          ? {
+              ...p,
+              status: action.payload.status,
+            }
+          : p
+      );
+    },
   },
 });
 
@@ -59,5 +87,8 @@ export const {
   deleteProduct,
   setSelectedProduct,
   setFilters,
+  bulkDeleteProducts,
+  bulkUpdateProducts,
+  bulkUpdateStatus,
 } = inventorySlice.actions;
 export default inventorySlice.reducer;

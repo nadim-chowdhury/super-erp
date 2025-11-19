@@ -51,6 +51,34 @@ const employeesSlice = createSlice({
     ) => {
       state.filters = { ...state.filters, ...action.payload };
     },
+    bulkDeleteEmployees: (state, action: PayloadAction<string[]>) => {
+      state.employees = state.employees.filter(
+        (e) => !action.payload.includes(e.id)
+      );
+    },
+    bulkUpdateEmployees: (
+      state,
+      action: PayloadAction<{ ids: string[]; updates: Partial<Employee> }>
+    ) => {
+      state.employees = state.employees.map((e) =>
+        action.payload.ids.includes(e.id)
+          ? { ...e, ...action.payload.updates }
+          : e
+      );
+    },
+    bulkUpdateStatus: (
+      state,
+      action: PayloadAction<{ ids: string[]; status: Employee["status"] }>
+    ) => {
+      state.employees = state.employees.map((e) =>
+        action.payload.ids.includes(e.id)
+          ? {
+              ...e,
+              status: action.payload.status,
+            }
+          : e
+      );
+    },
   },
 });
 
@@ -61,5 +89,8 @@ export const {
   deleteEmployee,
   setSelectedEmployee,
   setFilters,
+  bulkDeleteEmployees,
+  bulkUpdateEmployees,
+  bulkUpdateStatus,
 } = employeesSlice.actions;
 export default employeesSlice.reducer;

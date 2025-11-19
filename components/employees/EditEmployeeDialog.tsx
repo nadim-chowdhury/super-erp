@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppDispatch } from "@/lib/store/hooks";
-import { addEmployee } from "@/lib/store/slices/employeesSlice";
+import { updateEmployee } from "@/lib/store/slices/employeesSlice";
 import { Employee } from "@/lib/data/demoData";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,15 +44,17 @@ const positions = [
   "Coordinator",
 ];
 
-interface AddEmployeeDialogProps {
+interface EditEmployeeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  employee: Employee | null;
 }
 
-export function AddEmployeeDialog({
+export function EditEmployeeDialog({
   open,
   onOpenChange,
-}: AddEmployeeDialogProps) {
+  employee,
+}: EditEmployeeDialogProps) {
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState({
     name: "",
@@ -65,6 +67,28 @@ export function AddEmployeeDialog({
     hireDate: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Populate form when employee changes
+  useEffect(() => {
+    if (employee) {
+      const updateForm = () => {
+        const hireDate = new Date(employee.hireDate);
+        const formattedDate = hireDate.toISOString().split("T")[0];
+        setFormData({
+          name: employee.name,
+          email: employee.email,
+          phone: employee.phone,
+          department: employee.department,
+          position: employee.position,
+          salary: employee.salary.toString(),
+          status: employee.status,
+          hireDate: formattedDate,
+        });
+        setErrors({});
+      };
+      setTimeout(updateForm, 0);
+    }
+  }, [employee]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -100,12 +124,12 @@ export function AddEmployeeDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    if (!validateForm() || !employee) {
       return;
     }
 
-    const newEmployee: Employee = {
-      id: crypto.randomUUID(),
+    const updatedEmployee: Employee = {
+      ...employee,
       name: formData.name.trim(),
       email: formData.email.trim(),
       phone: formData.phone.trim(),
@@ -116,20 +140,7 @@ export function AddEmployeeDialog({
       hireDate: new Date(formData.hireDate).toISOString(),
     };
 
-    dispatch(addEmployee(newEmployee));
-
-    // Reset form
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      department: "",
-      position: "",
-      salary: "",
-      status: "active",
-      hireDate: "",
-    });
-    setErrors({});
+    dispatch(updateEmployee(updatedEmployee));
     onOpenChange(false);
   };
 
@@ -145,24 +156,25 @@ export function AddEmployeeDialog({
     }
   };
 
+  if (!employee) return null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Employee</DialogTitle>
+          <DialogTitle>Edit Employee</DialogTitle>
           <DialogDescription>
-            Add a new employee to your workforce. Fill in all the required
-            fields.
+            Update employee information. All fields are required.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">
+              <Label htmlFor="edit-name">
                 Full Name <span className="text-destructive">*</span>
               </Label>
               <Input
-                id="name"
+                id="edit-name"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
                 placeholder="Enter employee name"
@@ -175,11 +187,11 @@ export function AddEmployeeDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="email">
+                <Label htmlFor="edit-email">
                   Email <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="email"
+                  id="edit-email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
@@ -191,11 +203,11 @@ export function AddEmployeeDialog({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">
+                <Label htmlFor="edit-phone">
                   Phone <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="phone"
+                  id="edit-phone"
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => handleInputChange("phone", e.target.value)}
@@ -210,7 +222,7 @@ export function AddEmployeeDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="department">
+                <Label htmlFor="edit-department">
                   Department <span className="text-destructive">*</span>
                 </Label>
                 <Select
@@ -239,7 +251,7 @@ export function AddEmployeeDialog({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="position">
+                <Label htmlFor="edit-position">
                   Position <span className="text-destructive">*</span>
                 </Label>
                 <Select
@@ -269,11 +281,11 @@ export function AddEmployeeDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="salary">
+                <Label htmlFor="edit-salary">
                   Salary ($) <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="salary"
+                  id="edit-salary"
                   type="number"
                   min="0"
                   step="1000"
@@ -287,11 +299,11 @@ export function AddEmployeeDialog({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="hireDate">
+                <Label htmlFor="edit-hireDate">
                   Hire Date <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="hireDate"
+                  id="edit-hireDate"
                   type="date"
                   value={formData.hireDate}
                   onChange={(e) =>
@@ -306,12 +318,12 @@ export function AddEmployeeDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="edit-status">Status</Label>
               <Select
                 value={formData.status}
                 onValueChange={(value) => handleInputChange("status", value)}
               >
-                <SelectTrigger id="status">
+                <SelectTrigger id="edit-status">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -328,25 +340,15 @@ export function AddEmployeeDialog({
               variant="outline"
               onClick={() => {
                 onOpenChange(false);
-                setFormData({
-                  name: "",
-                  email: "",
-                  phone: "",
-                  department: "",
-                  position: "",
-                  salary: "",
-                  status: "active",
-                  hireDate: "",
-                });
-                setErrors({});
               }}
             >
               Cancel
             </Button>
-            <Button type="submit">Add Employee</Button>
+            <Button type="submit">Update Employee</Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
 }
+

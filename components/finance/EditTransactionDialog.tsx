@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAppDispatch } from "@/lib/store/hooks";
-import { addTransaction } from "@/lib/store/slices/financeSlice";
+import { updateTransaction } from "@/lib/store/slices/financeSlice";
 import { Transaction } from "@/lib/data/demoData";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,22 +34,24 @@ const expenseCategories = [
   "Other Expenses",
 ];
 
-interface AddTransactionDialogProps {
+interface EditTransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  transaction: Transaction | null;
 }
 
-export function AddTransactionDialog({
+export function EditTransactionDialog({
   open,
   onOpenChange,
-}: AddTransactionDialogProps) {
+  transaction,
+}: EditTransactionDialogProps) {
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState({
     type: "" as "income" | "expense" | "",
     category: "",
     description: "",
     amount: "",
-    date: new Date().toISOString().split("T")[0],
+    date: "",
     status: "completed" as "completed" | "pending",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -61,6 +63,26 @@ export function AddTransactionDialog({
       ? expenseCategories
       : [];
   }, [formData.type]);
+
+  // Populate form when transaction changes
+  useEffect(() => {
+    if (transaction) {
+      const updateForm = () => {
+        const date = new Date(transaction.date);
+        const formattedDate = date.toISOString().split("T")[0];
+        setFormData({
+          type: transaction.type,
+          category: transaction.category,
+          description: transaction.description,
+          amount: transaction.amount.toString(),
+          date: formattedDate,
+          status: transaction.status,
+        });
+        setErrors({});
+      };
+      setTimeout(updateForm, 0);
+    }
+  }, [transaction]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -93,12 +115,12 @@ export function AddTransactionDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    if (!validateForm() || !transaction) {
       return;
     }
 
-    const newTransaction: Transaction = {
-      id: crypto.randomUUID(),
+    const updatedTransaction: Transaction = {
+      ...transaction,
       type: formData.type as "income" | "expense",
       category: formData.category.trim(),
       description: formData.description.trim(),
@@ -107,18 +129,7 @@ export function AddTransactionDialog({
       status: formData.status,
     };
 
-    dispatch(addTransaction(newTransaction));
-
-    // Reset form
-    setFormData({
-      type: "",
-      category: "",
-      description: "",
-      amount: "",
-      date: new Date().toISOString().split("T")[0],
-      status: "completed",
-    });
-    setErrors({});
+    dispatch(updateTransaction(updatedTransaction));
     onOpenChange(false);
   };
 
@@ -141,20 +152,22 @@ export function AddTransactionDialog({
     }
   };
 
+  if (!transaction) return null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Transaction</DialogTitle>
+          <DialogTitle>Edit Transaction</DialogTitle>
           <DialogDescription>
-            Add a new financial transaction. Fill in all the required fields.
+            Update transaction information. All fields are required.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="type">
+                <Label htmlFor="edit-type">
                   Type <span className="text-destructive">*</span>
                 </Label>
                 <Select
@@ -162,7 +175,7 @@ export function AddTransactionDialog({
                   onValueChange={(value) => handleInputChange("type", value)}
                 >
                   <SelectTrigger
-                    id="type"
+                    id="edit-type"
                     className={errors.type ? "border-destructive" : ""}
                   >
                     <SelectValue placeholder="Select type" />
@@ -177,7 +190,7 @@ export function AddTransactionDialog({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="category">
+                <Label htmlFor="edit-category">
                   Category <span className="text-destructive">*</span>
                 </Label>
                 <Select
@@ -188,7 +201,7 @@ export function AddTransactionDialog({
                   disabled={!formData.type}
                 >
                   <SelectTrigger
-                    id="category"
+                    id="edit-category"
                     className={errors.category ? "border-destructive" : ""}
                   >
                     <SelectValue placeholder="Select category" />
@@ -208,11 +221,11 @@ export function AddTransactionDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">
+              <Label htmlFor="edit-description">
                 Description <span className="text-destructive">*</span>
               </Label>
               <Input
-                id="description"
+                id="edit-description"
                 value={formData.description}
                 onChange={(e) =>
                   handleInputChange("description", e.target.value)
@@ -227,11 +240,11 @@ export function AddTransactionDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="amount">
+                <Label htmlFor="edit-amount">
                   Amount <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="amount"
+                  id="edit-amount"
                   type="number"
                   step="0.01"
                   min="0.01"
@@ -245,11 +258,11 @@ export function AddTransactionDialog({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="date">
+                <Label htmlFor="edit-date">
                   Date <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="date"
+                  id="edit-date"
                   type="date"
                   value={formData.date}
                   onChange={(e) => handleInputChange("date", e.target.value)}
@@ -262,12 +275,12 @@ export function AddTransactionDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="edit-status">Status</Label>
               <Select
                 value={formData.status}
                 onValueChange={(value) => handleInputChange("status", value)}
               >
-                <SelectTrigger id="status">
+                <SelectTrigger id="edit-status">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -283,23 +296,15 @@ export function AddTransactionDialog({
               variant="outline"
               onClick={() => {
                 onOpenChange(false);
-                setFormData({
-                  type: "",
-                  category: "",
-                  description: "",
-                  amount: "",
-                  date: new Date().toISOString().split("T")[0],
-                  status: "completed",
-                });
-                setErrors({});
               }}
             >
               Cancel
             </Button>
-            <Button type="submit">Add Transaction</Button>
+            <Button type="submit">Update Transaction</Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
 }
+

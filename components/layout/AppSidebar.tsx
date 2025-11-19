@@ -86,7 +86,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup className="pt-0">
-          <SidebarGroupLabel className="h-16 px-3">
+          <SidebarGroupLabel className="h-16 px-1">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-primary/10 border border-primary/20">
                 <Sparkles className="h-5 w-5 text-primary" />

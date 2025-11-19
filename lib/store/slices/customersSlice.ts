@@ -49,6 +49,34 @@ const customersSlice = createSlice({
     ) => {
       state.filters = { ...state.filters, ...action.payload };
     },
+    bulkDeleteCustomers: (state, action: PayloadAction<string[]>) => {
+      state.customers = state.customers.filter(
+        (c) => !action.payload.includes(c.id)
+      );
+    },
+    bulkUpdateCustomers: (
+      state,
+      action: PayloadAction<{ ids: string[]; updates: Partial<Customer> }>
+    ) => {
+      state.customers = state.customers.map((c) =>
+        action.payload.ids.includes(c.id)
+          ? { ...c, ...action.payload.updates }
+          : c
+      );
+    },
+    bulkUpdateStatus: (
+      state,
+      action: PayloadAction<{ ids: string[]; status: Customer["status"] }>
+    ) => {
+      state.customers = state.customers.map((c) =>
+        action.payload.ids.includes(c.id)
+          ? {
+              ...c,
+              status: action.payload.status,
+            }
+          : c
+      );
+    },
   },
 });
 
@@ -59,5 +87,8 @@ export const {
   deleteCustomer,
   setSelectedCustomer,
   setFilters,
+  bulkDeleteCustomers,
+  bulkUpdateCustomers,
+  bulkUpdateStatus,
 } = customersSlice.actions;
 export default customersSlice.reducer;

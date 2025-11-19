@@ -115,6 +115,66 @@ const financeSlice = createSlice({
     ) => {
       state.filters = { ...state.filters, ...action.payload };
     },
+    bulkDeleteTransactions: (state, action: PayloadAction<string[]>) => {
+      const transactionsToDelete = state.transactions.filter((t) =>
+        action.payload.includes(t.id)
+      );
+      transactionsToDelete.forEach((transaction) => {
+        if (transaction.type === "income") {
+          state.summary.totalIncome -= transaction.amount;
+        } else {
+          state.summary.totalExpenses -= transaction.amount;
+        }
+      });
+      state.summary.netProfit =
+        state.summary.totalIncome - state.summary.totalExpenses;
+      state.transactions = state.transactions.filter(
+        (t) => !action.payload.includes(t.id)
+      );
+    },
+    bulkUpdateTransactions: (
+      state,
+      action: PayloadAction<{ ids: string[]; updates: Partial<Transaction> }>
+    ) => {
+      state.transactions = state.transactions.map((t) => {
+        if (action.payload.ids.includes(t.id)) {
+          const updated = { ...t, ...action.payload.updates };
+          // Update summary if amount or type changed
+          if (
+            action.payload.updates.amount !== undefined ||
+            action.payload.updates.type !== undefined
+          ) {
+            if (t.type === "income") {
+              state.summary.totalIncome -= t.amount;
+            } else {
+              state.summary.totalExpenses -= t.amount;
+            }
+            if (updated.type === "income") {
+              state.summary.totalIncome += updated.amount;
+            } else {
+              state.summary.totalExpenses += updated.amount;
+            }
+            state.summary.netProfit =
+              state.summary.totalIncome - state.summary.totalExpenses;
+          }
+          return updated;
+        }
+        return t;
+      });
+    },
+    bulkUpdateStatus: (
+      state,
+      action: PayloadAction<{ ids: string[]; status: Transaction["status"] }>
+    ) => {
+      state.transactions = state.transactions.map((t) =>
+        action.payload.ids.includes(t.id)
+          ? {
+              ...t,
+              status: action.payload.status,
+            }
+          : t
+      );
+    },
   },
 });
 
@@ -125,5 +185,8 @@ export const {
   deleteTransaction,
   setSelectedTransaction,
   setFilters,
+  bulkDeleteTransactions,
+  bulkUpdateTransactions,
+  bulkUpdateStatus,
 } = financeSlice.actions;
 export default financeSlice.reducer;

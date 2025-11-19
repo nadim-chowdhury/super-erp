@@ -49,6 +49,34 @@ const suppliersSlice = createSlice({
     ) => {
       state.filters = { ...state.filters, ...action.payload };
     },
+    bulkDeleteSuppliers: (state, action: PayloadAction<string[]>) => {
+      state.suppliers = state.suppliers.filter(
+        (s) => !action.payload.includes(s.id)
+      );
+    },
+    bulkUpdateSuppliers: (
+      state,
+      action: PayloadAction<{ ids: string[]; updates: Partial<Supplier> }>
+    ) => {
+      state.suppliers = state.suppliers.map((s) =>
+        action.payload.ids.includes(s.id)
+          ? { ...s, ...action.payload.updates }
+          : s
+      );
+    },
+    bulkUpdateStatus: (
+      state,
+      action: PayloadAction<{ ids: string[]; status: Supplier["status"] }>
+    ) => {
+      state.suppliers = state.suppliers.map((s) =>
+        action.payload.ids.includes(s.id)
+          ? {
+              ...s,
+              status: action.payload.status,
+            }
+          : s
+      );
+    },
   },
 });
 
@@ -59,5 +87,8 @@ export const {
   deleteSupplier,
   setSelectedSupplier,
   setFilters,
+  bulkDeleteSuppliers,
+  bulkUpdateSuppliers,
+  bulkUpdateStatus,
 } = suppliersSlice.actions;
 export default suppliersSlice.reducer;

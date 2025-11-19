@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppDispatch } from "@/lib/store/hooks";
-import { addProduct } from "@/lib/store/slices/productsSlice";
+import { updateProduct } from "@/lib/store/slices/productsSlice";
 import { Product } from "@/lib/data/demoData";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,17 +34,19 @@ const categories = [
   "Automotive",
 ];
 
-interface AddProductDialogProps {
+interface EditProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  product: Product | null;
   suppliers: string[];
 }
 
-export function AddProductDialog({
+export function EditProductDialog({
   open,
   onOpenChange,
+  product,
   suppliers,
-}: AddProductDialogProps) {
+}: EditProductDialogProps) {
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState({
     name: "",
@@ -58,10 +60,25 @@ export function AddProductDialog({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const generateSKU = () => {
-    const randomSKU = Math.random().toString(36).substring(2, 10).toUpperCase();
-    setFormData((prev) => ({ ...prev, sku: randomSKU }));
-  };
+  // Populate form when product changes
+  useEffect(() => {
+    if (product) {
+      const updateForm = () => {
+        setFormData({
+          name: product.name,
+          sku: product.sku,
+          category: product.category,
+          price: product.price.toString(),
+          cost: product.cost.toString(),
+          stock: product.stock.toString(),
+          minStock: product.minStock.toString(),
+          supplier: product.supplier,
+        });
+        setErrors({});
+      };
+      setTimeout(updateForm, 0);
+    }
+  }, [product]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -98,7 +115,7 @@ export function AddProductDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    if (!validateForm() || !product) {
       return;
     }
 
@@ -111,8 +128,8 @@ export function AddProductDialog({
         ? "low_stock"
         : "in_stock";
 
-    const newProduct: Product = {
-      id: crypto.randomUUID(),
+    const updatedProduct: Product = {
+      ...product,
       name: formData.name.trim(),
       sku: formData.sku.trim().toUpperCase(),
       category: formData.category,
@@ -122,23 +139,9 @@ export function AddProductDialog({
       minStock,
       status,
       supplier: formData.supplier,
-      createdAt: new Date().toISOString(),
     };
 
-    dispatch(addProduct(newProduct));
-
-    // Reset form
-    setFormData({
-      name: "",
-      sku: "",
-      category: "",
-      price: "",
-      cost: "",
-      stock: "",
-      minStock: "",
-      supplier: "",
-    });
-    setErrors({});
+    dispatch(updateProduct(updatedProduct));
     onOpenChange(false);
   };
 
@@ -154,24 +157,26 @@ export function AddProductDialog({
     }
   };
 
+  if (!product) return null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Product</DialogTitle>
+          <DialogTitle>Edit Product</DialogTitle>
           <DialogDescription>
-            Add a new product to your catalog. Fill in all the required fields.
+            Update product information. All fields are required.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">
+                <Label htmlFor="edit-name">
                   Product Name <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="name"
+                  id="edit-name"
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
                   placeholder="Enter product name"
@@ -182,28 +187,18 @@ export function AddProductDialog({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sku">
+                <Label htmlFor="edit-sku">
                   SKU <span className="text-destructive">*</span>
                 </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="sku"
-                    value={formData.sku}
-                    onChange={(e) =>
-                      handleInputChange("sku", e.target.value.toUpperCase())
-                    }
-                    placeholder="Enter or generate SKU"
-                    className={errors.sku ? "border-destructive" : ""}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={generateSKU}
-                    className="whitespace-nowrap"
-                  >
-                    Generate
-                  </Button>
-                </div>
+                <Input
+                  id="edit-sku"
+                  value={formData.sku}
+                  onChange={(e) =>
+                    handleInputChange("sku", e.target.value.toUpperCase())
+                  }
+                  placeholder="Enter SKU"
+                  className={errors.sku ? "border-destructive" : ""}
+                />
                 {errors.sku && (
                   <p className="text-sm text-destructive">{errors.sku}</p>
                 )}
@@ -212,7 +207,7 @@ export function AddProductDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="category">
+                <Label htmlFor="edit-category">
                   Category <span className="text-destructive">*</span>
                 </Label>
                 <Select
@@ -239,7 +234,7 @@ export function AddProductDialog({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="supplier">
+                <Label htmlFor="edit-supplier">
                   Supplier <span className="text-destructive">*</span>
                 </Label>
                 <Select
@@ -275,11 +270,11 @@ export function AddProductDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="price">
+                <Label htmlFor="edit-price">
                   Price ($) <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="price"
+                  id="edit-price"
                   type="number"
                   step="0.01"
                   min="0"
@@ -293,11 +288,11 @@ export function AddProductDialog({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cost">
+                <Label htmlFor="edit-cost">
                   Cost ($) <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="cost"
+                  id="edit-cost"
                   type="number"
                   step="0.01"
                   min="0"
@@ -314,11 +309,11 @@ export function AddProductDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="stock">
+                <Label htmlFor="edit-stock">
                   Stock Quantity <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="stock"
+                  id="edit-stock"
                   type="number"
                   min="0"
                   value={formData.stock}
@@ -331,11 +326,11 @@ export function AddProductDialog({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="minStock">
+                <Label htmlFor="edit-minStock">
                   Minimum Stock <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="minStock"
+                  id="edit-minStock"
                   type="number"
                   min="0"
                   value={formData.minStock}
@@ -357,22 +352,11 @@ export function AddProductDialog({
               variant="outline"
               onClick={() => {
                 onOpenChange(false);
-                setFormData({
-                  name: "",
-                  sku: "",
-                  category: "",
-                  price: "",
-                  cost: "",
-                  stock: "",
-                  minStock: "",
-                  supplier: "",
-                });
-                setErrors({});
               }}
             >
               Cancel
             </Button>
-            <Button type="submit">Add Product</Button>
+            <Button type="submit">Update Product</Button>
           </DialogFooter>
         </form>
       </DialogContent>
