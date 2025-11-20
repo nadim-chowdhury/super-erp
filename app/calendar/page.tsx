@@ -120,7 +120,10 @@ export default function CalendarPage() {
       weekStart.setDate(weekStart.getDate() - weekStart.getDay());
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekEnd.getDate() + 6);
-      return `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
+      return `${format(weekStart, "MMM d")} - ${format(
+        weekEnd,
+        "MMM d, yyyy"
+      )}`;
     } else {
       return format(currentDateObj, "EEEE, MMMM d, yyyy");
     }
@@ -170,7 +173,9 @@ export default function CalendarPage() {
             <CardContent>
               <CalendarFilters
                 filters={filters}
-                onFilterChange={(newFilters) => dispatch(setFilters(newFilters))}
+                onFilterChange={(newFilters) =>
+                  dispatch(setFilters(newFilters))
+                }
                 onClearFilters={() => dispatch(clearFilters())}
               />
             </CardContent>
@@ -255,4 +260,3 @@ export default function CalendarPage() {
     </MainLayout>
   );
 }
-
