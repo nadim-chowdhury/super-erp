@@ -60,7 +60,7 @@ export function KanbanColumn({
       <div
         className={cn(
           "flex flex-col h-full max-h-full bg-muted/30 rounded-lg p-4 transition-all",
-          isOver && "bg-muted/50 ring-2 ring-primary ring-offset-2"
+          isOver && "bg-muted/50",
         )}
       >
         <div className="flex items-center justify-between mb-4">
